@@ -174,7 +174,7 @@ async def on_message(message):
                                                                           battle.girls[girl - 1]))
         message.content = message.content.lower()
         if message.content.startswith('>vote'):
-            if message.content[6] == 1 or message.content[6] == 2:
+            if message.content[6] == '1' or message.content[6] == '2':
                 girl = int(message.content[6])
                 battle.vote_girl(girl, message.author)
                 # TODO: This is ugly. Maybe votes should be a property of QtAnimeGirl objects?
