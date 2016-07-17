@@ -174,15 +174,12 @@ async def on_message(message):
                                                                           battle.girls[girl - 1]))
         message.content = message.content.lower()
         if message.content.startswith('>vote'):
-            girl = int(message.content[6])
-            battle.vote_girl(girl, message.author)
-            # TODO: This is ugly. Maybe votes should be a property of QtAnimeGirl objects? I can't edit that code right now though.
-            await client.edit_message(battle.vote,
-                                      '%s vs %s - %s - %s' % (battle.girls[0],
-                                                              battle.girls[1],
-                                                              battle.vote_A,
-                                                              battle.vote_B))
-        elif message.content.startswith('>drop') and (message.author == owner_id):
+            if message.content[6] == 1 or message.content[6] == 2:
+                girl = int(message.content[6])
+                battle.vote_girl(girl, message.author)
+                # TODO: This is ugly. Maybe votes should be a property of QtAnimeGirl objects? I can't edit that code right now though.
+                await client.edit_message(battle.vote,'%s vs %s - %s - %s' % (battle.girls[0],battle.girls[1],battle.vote_A,battle.vote_B))
+        elif (message.content.startswith('>drop') and (message.author == owner_id)):
             girl = int(message.content[6])
             battle.drop(girl)
             await client.send_message(message.channel,
