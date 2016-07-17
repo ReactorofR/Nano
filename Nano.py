@@ -48,7 +48,7 @@ class qt_battle():
                 self.vote_B -= 1
             else:
                 self.vote_A -= 1
-        setattr(self, "vote_{0}".format(letter), 1)
+        setattr(self, "vote_{0}".format(letter), getattr(self, "vote_{0}".format(letter)) + 1)
         self.voters[author] = girl
     def drop(self, girl):
         self.girls[girl].delete()
