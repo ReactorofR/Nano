@@ -13,7 +13,7 @@ sys.path.append(qtpath)
 os.environ["DJANGO_SETTINGS_MODULE"] = "qtbot.settings"
 django.setup()
 from girldatabase.models import QtAnimeGirl, Tag
-from django.db.models import Max, Min
+from django.db.models import Max, Min, Avg
 
 image_directory = r"E:\Projects\Discord bot\QTBOT\qtbot\girldatabase\images"
 # Should probably be reading this from a file somewhere.
@@ -22,6 +22,7 @@ owner_id = discord.User(id='191275079433322496')
 
 client = discord.Client()
 battles_ongoing = {}
+qtb_roles = {}
 
 class qt_battle():
     def __init__(self):
@@ -94,6 +95,8 @@ class qt_battle():
 async def on_ready():
     print('''Logged in as\n{0}\n{1}\n------
         '''.format(client.user.name, client.user.id))
+    for server in client.servers:
+        qtb_roles[server] = discord.Role(server=server,name="qtb",id='205714835306971136')
 
 @client.event
 async def on_message(message):
@@ -136,6 +139,7 @@ async def on_message(message):
         print('Girl 2 = {}({})'.format(battle.girls[1].id, battle.girls[1].elo))
         print('--------------')
 
+        starting_msg = await client.send_message(message.channel,'Starting {}!'.format(qtb_roles[message.server].mention))
         await client.send_typing(message.channel)
         await client.send_file(message.channel,
                                open(os.path.join(image_directory, battle.girls[0].image), 'rb'),
@@ -147,6 +151,7 @@ async def on_message(message):
                                filename=battle.girls[1].image,
                                content='{0} with a {1} ranking'.format(battle.girls[1], battle.girls[1].elo))
         try:
+            await client.delete_message(starting_msg)
             await client.delete_message(tmp)
         # FIXME: Bare exception - what exception does this throw?
         except:
@@ -251,10 +256,28 @@ async def on_message(message):
                 filename=worstgirl[0].image,
                 content='{0} with a {1} ranking'.format(worstgirl[0], worstgirl[0].elo))
 
+    elif (message.content.startswith('>averagegirl') or message.content.startswith('>avggirl')):
+        elo = QtAnimeGirl.objects.aggregate(Avg('elo'))
+        averagegirl = QtAnimeGirl.objects.filter(elo = elo['elo__avg'])
+        averagegirl = random.choice(averagegirl)
+
+        await client.send_message(message.channel, "Most average girl!")
+        await client.send_file(
+            message.channel,
+            open(os.path.join(image_directory, averagegirl.image), 'rb'),
+            filename=averagegirl.image,
+            content='{0} with a {1} ranking'.format(averagegirl, averagegirl.elo))
+
     elif message.content.startswith('>updategirls') and message.author == owner_id:
         anime_girl = QtAnimeGirl()
         new_girls = anime_girl.getNewGirls(image_directory)
         await client.send_message(message.channel, "{} new girls added!".format(new_girls))
+
+    elif message.content.startswith('>addme'):
+        await client.add_roles(message.author,qtb_roles[message.server])
+        info_msg =  await client.send_message(message.channel,'Added {} to {}'.format(message.author.mention,qtb_roles[message.server].mention))
+        await asyncio.sleep(30)
+        await client.delete_message(info_msg)
 
     elif message.content.startswith('-randqt'):
         tag_regex = re.compile(r'(((?<=-randqt\s)([a-zA-Z0-9-0_]+))|((?<=,)([a-zA-Z0-9-0_]+)))')
