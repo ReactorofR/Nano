@@ -1,60 +1,97 @@
-from django.db import models
-import os,math
+from sqlalchemy import ForeignKey, Integer, String, Table,UniqueConstraint,create_engine,Column
+from sqlalchemy.orm import relationship,sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.sqltypes import NullType
+from sqlalchemy.ext.declarative import declarative_base
 
-class Tag(models.Model):
-	tag = models.CharField(max_length=50,unique=True)
-	def __str__(self):
-		return str(self.tag)
+import os,random
+
+engine = create_engine('sqlite:///db.sqlite3')
+Session = sessionmaker(bind=engine)
+session = Session()
+Base = declarative_base()
+metadata = Base.metadata
+
+association_table = Table('girldatabase_qtanimegirl_tags',Base.metadata,
+    Column('qtanimegirl_id', Integer, ForeignKey('girldatabase_qtanimegirl.id'), nullable=False, index=True),
+    Column('tag_id', Integer, ForeignKey('girldatabase_tag.id'), nullable=False, index=True)
+)
+
+class QtAnimeGirl(Base):
+    __tablename__ = 'girldatabase_qtanimegirl'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(40), nullable= True)
+    elo = Column(Integer, nullable=False, default= 1000)
+    image = Column(String(100), nullable=False, unique= True)
+
+    tags = relationship(
+        "Tag",
+        secondary = association_table,
+        back_populates = "qtanimegirls")
+
+    def __str__(self):
+        if self.name is not None and self.name > '':
+            return self.name
+        else:
+            return str(self.id)
+
+    def get_all_girls(self,path='/images/'):
+        for path in os.listdir(path):
+            a = QtAnimeGirl(image=path)
+            Session.add(a)
+        session.commit()
+
+    def get_new_girls(path='/images/'):
+        new_girl_count = 0
+        for image in os.listdir(path):
+            try:
+                a = session.query(QtAnimeGirl).filter(QtAnimeGirl.image==image).one()
+            except NoResultFound:
+                print('Adding new girl with image {}'.format(image))
+                a = QtAnimeGirl(image=image)
+                session.add(a)
+                new_girl_count += 1
+        session.commit()
+        return new_girl_count
+
+    def updateELO(self,eloOpponent,score):
+        expectedA = 1/(1+pow(10,((eloOpponent-self.elo)/400)))
+        self.elo = round(self.elo + 32 * (score-expectedA))
+        session.commit()
+
+    def addTag(self,tag):
+        #check if tag exists
+        try:
+            tag = session.query(Tag).filter(Tag.tag == tag).one()
+        except NoResultFound:
+            if tag not in self.tags:
+                try:
+                    new_tag = tag = session.query(Tag).filter(Tag.tag == tag).one()
+                except NoResultFound:
+                    new_tag = Tag(tag=tag)
+                    session.add(new_tag)
+                self.tags.append(new_tag)
+                session.commit()
 
 
-class QtAnimeGirl(models.Model):
-	id = models.AutoField(primary_key=True,unique=True)
-	name = models.CharField(max_length=40, blank=True)
-	elo = models.IntegerField(default = 1000)
-	image = models.CharField(max_length=100, unique=True)
-	tags = models.ManyToManyField(Tag)
 
-	def __str__(self):
-		if len(self.name)<1:
-			return str(self.id)
-		else:
-			return self.name	
+class Tag(Base):
+    __tablename__ = 'girldatabase_tag'
 
-	def getAllGirls(self,path='/images/'):
-		for path in os.listdir(path):
-			a = QtAnimeGirl()
-			a.image = path
-			a.save()
+    id = Column(Integer, primary_key=True)
+    tag = Column(String(50), nullable=False)
 
-	def getNewGirls(self,path='/images/'):
-		new_girl_count = 0
-		for image in os.listdir(path):
-			try:
-				a = QtAnimeGirl.objects.get(image=image)
-			except QtAnimeGirl.DoesNotExist:
-				print('Adding new girl with image {}'.format(image))
-				a = QtAnimeGirl()
-				a.image = image
-				a.save()
-				new_girl_count += 1
+    qtanimegirls = relationship(
+        "QtAnimeGirl",
+        secondary = association_table,
+        back_populates = "tags")
 
-		return new_girl_count
+    def __str__(self):
+        return self.tag
 
-
-	def updateELO(self,eloOpponent,score):
-		expectedA = 1/(1+pow(10,((eloOpponent-self.elo)/400)))
-		self.elo = round(self.elo + 32 * (score-expectedA))
-		self.save()
-
-	def addTag(self,tag):
-		#check if tag exists
-		try:
-			self.tags.get(tag=tag)
-		except Tag.DoesNotExist:
-			try:
-				new_tag = Tag.objects.get(tag=tag)
-			except Tag.DoesNotExist:
-				new_tag = Tag(tag=tag)
-				new_tag.save()
-			self.tags.add(new_tag)
-			self.save()
+t_sqlite_sequence = Table(
+    'sqlite_sequence', metadata,
+    Column('name', NullType),
+    Column('seq', NullType)
+)

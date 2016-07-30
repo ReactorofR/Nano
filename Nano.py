@@ -4,16 +4,11 @@ import random
 import re
 import os
 import sys
-import django
 import datetime
+from models import *
 
 qtpath = r"E:\Projects\Discord bot\QTBOT\qtbot"
 sys.path.append(qtpath)
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "qtbot.settings"
-django.setup()
-from girldatabase.models import QtAnimeGirl, Tag
-from django.db.models import Max, Min, Avg
 
 image_directory = r"E:\Projects\Discord bot\QTBOT\qtbot\girldatabase\images"
 # Should probably be reading this from a file somewhere.
@@ -39,7 +34,7 @@ class qt_battle():
         # 'girl' should be either 1 or 2.
         # I've done some ripping here so it might be buggy, beware.
         self.girls[girl - 1].name = new_name
-        self.girls[girl - 1].save()
+        session.commit()
     def vote_girl(self, girl, author):
         letter = 'A' if girl == 1 else 'B'
         if author in self.voters:
@@ -51,8 +46,6 @@ class qt_battle():
                 self.vote_A -= 1
         setattr(self, "vote_{0}".format(letter), getattr(self, "vote_{0}".format(letter)) + 1)
         self.voters[author] = girl
-    def drop(self, girl):
-        self.girls[girl].delete()
     def tag(self, girl, message):
         # TODO: Comment this hideous regex.
         # Probably rewrite it too.
@@ -64,9 +57,8 @@ class qt_battle():
             tag_list.append(tag.group())
         return ', '.join(tag_list)
     def tags(self, girl):
-        tag_objects = self.girls[girl-1].tags.all()
         tags = []
-        for x in tag_objects:
+        for x in self.girls[girl-1].tags:
             tags.append(x.tag)
         return ', '.join(tags)
     def end(self):
@@ -113,25 +105,23 @@ async def on_message(message):
         tags = re.finditer(tag_regex, message.content)
 
         if message.content == ('>qtb') or message.content == ('>qtbattle'):
-            all_girls = QtAnimeGirl.objects.all()
+            all_girls = session.query(QtAnimeGirl).all()
         else:
-            for x in tags:
+            for tag in tags:
                 try:
-                    tag_object = Tag.objects.get(tag=x.group)
-                    girls_with_tag = tag_object.qtanimegirl_set.all()
+                    tag_object = session.query(Tag).filter(Tag.tag == tag.group()).one()
+                    girls_with_tag = tag_object.qtanimegirls
                     for x in girls_with_tag:
                         if x.id not in all_girls:
                             all_girls.append(x.id)
-                # Smith: This error has a weird name - did you write that error in the other file?
-                # Error names should end in -Error.
-                except Tag.DoesNotExist:
+                except NoResultFound:
                     pass
             if len(all_girls) >= 2:
-                all_girls = QtAnimeGirl.objects.filter(id__in=all_girls)
+                all_girls = session.query(QtAnimeGirl).filter(QtAnimeGirl.id.in_(all_girls)).all()
             else:
                 tmp = await client.send_message(message.channel,
                                                 "Couldn't find enough girls with provided tags, using random girls")
-                all_girls = QtAnimeGirl.objects.all()
+                all_girls = session.query(QtAnimeGirl).all()
 
         battle.girls = random.sample(list(all_girls), 2)
 
@@ -187,11 +177,6 @@ async def on_message(message):
                                                                                battle.girls[1],
                                                                                battle.vote_A,
                                                                                battle.vote_B))
-        elif message.content.startswith('>drop') and (message.author == owner_id):
-            girl = int(message.content[6])
-            battle.drop(girl)
-            await client.send_message(message.channel,
-                                      'Girl {} has been dropped from the database!'.format(battle.girls[girl - 1]))
         elif message.content.startswith('>tag '):
             # Space after '>tag' otherwise '>tags' would also pass
             girl = int(message.content[5])
@@ -216,12 +201,17 @@ async def on_message(message):
     # This part is unbelievably bad, but I don't see an easy fix right now.
     # TODO: Rewrite all of this.
     if message.content.startswith('>bestgirl'):
-        elo = QtAnimeGirl.objects.aggregate(Max('elo'))
-        # What's the idea with the double underscores (elo__max)?
-        bestgirl = QtAnimeGirl.objects.filter(elo=elo['elo__max'])
-        if len(bestgirl) > 1:
-            await client.send_message(message.channel, "It's a tie between {} girls!".format(len(bestgirl)))
-            for x in bestgirl:
+        all_girls = session.query(QtAnimeGirl).order_by(QtAnimeGirl.elo).all()
+        first = all_girls[len(all_girls)-1]
+        best_girls = []
+        x = 1
+        while first.elo == all_girls[len(all_girls)-x].elo:
+            best_girls.append(all_girls[len(all_girls)-x])
+            x += 1
+
+        if len(best_girls) > 1:
+            await client.send_message(message.channel, "It's a tie between {} girls!".format(len(best_girls)))
+            for x in best_girls:
                 await client.send_typing(message.channel)
                 await client.send_file(
                     message.channel,
@@ -232,13 +222,19 @@ async def on_message(message):
             await client.send_message(message.channel, "Best girl!")
             await client.send_file(
                 message.channel,
-                open(os.path.join(image_directory, bestgirl[0].image), 'rb'),
-                filename=bestgirl[0].image,
-                content='{0} with a {1} ranking'.format(bestgirl[0], bestgirl[0].elo))
+                open(os.path.join(image_directory, best_girls[0].image), 'rb'),
+                filename=best_girls[0].image,
+                content='{0} with a {1} ranking'.format(best_girls[0], best_girls[0].elo))
 
     elif message.content.startswith('>worstgirl'):
-        elo = QtAnimeGirl.objects.aggregate(Min('elo'))
-        worstgirl = QtAnimeGirl.objects.filter(elo=elo['elo__min'])
+        all_girls = session.query(QtAnimeGirl).order_by(QtAnimeGirl.elo).all()
+        first = all_girls[0]
+        worstgirl = []
+        x = 0
+        while first.elo == all_girls[x].elo:
+            worstgirl.append(all_girls[x])
+            x += 1
+
         if len(worstgirl) > 1:
             await client.send_message(message.channel, "It's a tie between {} girls!".format(len(worstgirl)))
             for x in worstgirl:
@@ -286,30 +282,16 @@ async def on_message(message):
         all_girls = []
         info = ''
         if message.content == ('-randqt'):
-            all_girls = QtAnimeGirl.objects.all()
+            all_girls = session.query(QtAnimeGirl).all()
         else:
-            query = QtAnimeGirl.objects
-            for x in tags:
-                query = query.filter(tags__tag=x.group())
+            query = session.query(QtAnimeGirl)
+            for tag in tags:
+                query = query.filter(QtAnimeGirl.tags.any(tag = tag.group()))
             try:
-                all_girls = query
-            # FIXME: Bare except
-            except:
+                all_girls = query.all()
+            except NoResultFound:
                 pass
-            if not all_girls:
-                #using filter() made all_girls a QuerySet object
-                all_girls = []
-                for x in tags:
-                    try:
-                        girls_with_tag = QtAnimeGirl.objects.filter(tags__tag=x.group())
-                        for z in girls_with_tag:
-                            if z not in all_girls:
-                                all_girls.append(z)
-                    except Tag.DoesNotExist:
-                        pass
-        if not all_girls:
-            all_girls = QtAnimeGirl.objects.all()
-            info = 'No girls found with tags provided'
+
         girl = random.choice(all_girls)
         #If girl found with provided tags list them
         if not info:
@@ -318,7 +300,7 @@ async def on_message(message):
             # I'm not sure if this can ever occur.
             # This variable should probably be named differently regardless,
             # as it's easy to mistake this for the int with the same name.
-            tag_objects = girl.tags.all()
+            tag_objects = girl.tags
             tags = []
             for x in tag_objects:
                 tags.append(x.tag)
