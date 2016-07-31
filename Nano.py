@@ -1,7 +1,6 @@
 import discord
 import asyncio
 import random
-import re
 import os
 import sys
 import datetime
@@ -49,12 +48,13 @@ class qt_battle():
     def tag(self, girl, message):
         # TODO: Comment this hideous regex.
         # Probably rewrite it too.
-        tag_search = re.compile('(((?<=>tag\s{}\s)([a-zA-Z0-9-0_]+))|((?<=,)([a-zA-Z0-9-0_]+))|((?<=,\s)([a-zA-Z0-9-0_]+)))'.format(girl))
-        tags = re.finditer(tag_search, message)
-        tag_list = []
+
+        split_content = message.content.split(' ')
+        tags = split_content[2].split(',')
+
         for tag in tags:
-            self.girls[girl-1].addTag(tag.group())
-            tag_list.append(tag.group())
+            self.girls[girl-1].addTag(tag)
+
         return ', '.join(tag_list)
     def tags(self, girl):
         tags = []
@@ -101,15 +101,15 @@ async def on_message(message):
         print('Starting QT battle')
 
         battle.caller = message.author
-        tag_regex = re.compile(r'((((?<=>qtb\s)|(?<=>qtbattle\s))([a-zA-Z0-9-0_]+))|((?<=,)([a-zA-Z0-9-0_]+)))')
-        tags = re.finditer(tag_regex, message.content)
+
+        tags = message.content.split(' ')[1].split(',')
 
         if message.content == ('>qtb') or message.content == ('>qtbattle'):
             all_girls = session.query(QtAnimeGirl).all()
         else:
             for tag in tags:
                 try:
-                    tag_object = session.query(Tag).filter(Tag.tag == tag.group()).one()
+                    tag_object = session.query(Tag).filter(Tag.tag == tag).one()
                     girls_with_tag = tag_object.qtanimegirls
                     for x in girls_with_tag:
                         if x.id not in all_girls:
@@ -161,9 +161,9 @@ async def on_message(message):
         battle = battles_ongoing[message.channel]
 
         if message.content.startswith('>name'):
-            girl = int(message.content[6])
-            new_name = re.search(r'(?<=\>name\s{0}\s).+'.format(girl), message.content).group()
-            battle.name(girl, new_name)
+
+            split_content = message.content.split(' ')
+            battle.name(split_content[1], split_content[2])
             await client.send_message(message.channel,
                                       'Girl {0} now known as {1}!'.format(battle.girls[girl - 1].id,
                                                                           battle.girls[girl - 1]))
@@ -212,7 +212,7 @@ async def on_message(message):
             info = await client.send_message(message.channel,'Tag {} added to {}!'.format(tags[0],girl.id))
         else:
             info = await client.send_message(message.channel,'Tags {} added to {}!'.format((', '.join(tags)),girl.id))
-            
+
         await client.delete_message(message)
         await asyncio.sleep(30)
         await client.delete_message(info)
@@ -295,9 +295,9 @@ async def on_message(message):
         await client.delete_message(info_msg)
 
     elif message.content.startswith('-randqt'):
-        tag_regex = re.compile(r'(((?<=-randqt\s)([a-zA-Z0-9-0_]+))|((?<=,)([a-zA-Z0-9-0_]+)))')
+        
         # FIXME: Redefinition from str to list.
-        tags = list(re.finditer(tag_regex, message.content))
+        tags = message.content.split(' ')[1].split(',')
         all_girls = []
         info = ''
         if message.content == ('-randqt'):
@@ -305,7 +305,7 @@ async def on_message(message):
         else:
             query = session.query(QtAnimeGirl)
             for tag in tags:
-                query = query.filter(QtAnimeGirl.tags.any(tag = tag.group()))
+                query = query.filter(QtAnimeGirl.tags.any(tag = tag))
             try:
                 all_girls = query.all()
             except NoResultFound:
@@ -337,9 +337,8 @@ async def on_message(message):
 
     # This should probably not be in the qtbattle file :-).
     elif message.content.startswith('-rand'):
-        search_param = re.search(r'(?<=-rand\s)[0-9]+', message.content)
         try:
-            param = int(search_param.group())
+            param = int(message.content.split(' ')[1])
             mention = message.author.mention
             await client.send_message(message.channel,
                                       '{} rolled **{}**'.format(mention, random.randint(0, param)))
@@ -347,9 +346,8 @@ async def on_message(message):
         except:
             pass
 
-    elif message.content.startswith('>setgame') and (message.author == owner_id):
-        search_param = re.search(r'(?<=\>setgame\s).+', message.content)
-        game = discord.Game(name=search_param.group())
+    elif message.content.startswith('>setgame') and (message.author == owner_id)
+        game = discord.Game(name=message.content.split(' ')[1])
         await client.change_status(game)
 
     elif message.content.startswith('>help'):
