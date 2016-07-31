@@ -55,7 +55,7 @@ class qt_battle():
         for tag in tags:
             self.girls[girl-1].addTag(tag)
 
-        return ', '.join(tag_list)
+        return ', '.join(tags)
     def tags(self, girl):
         tags = []
         for x in self.girls[girl-1].tags:
