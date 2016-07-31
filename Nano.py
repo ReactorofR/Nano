@@ -198,9 +198,28 @@ async def on_message(message):
             end_message = battle.end()
             await client.send_message(message.channel, end_message)
 
+    if message.content.startswith('>tagid'):
+        split_content = message.content.split(' ')
+        girl_id = int(split_content[1])
+        tags = split_content[2].split(',')
+
+        girl = session.query(QtAnimeGirl).filter(QtAnimeGirl.id == girl_id).one()
+
+        for tag in tags:
+            girl.addTag(tag)
+
+        if len(tags) == 1:
+            info = await client.send_message(message.channel,'Tag {} added to {}!'.format(tags[0],girl.id))
+        else:
+            info = await client.send_message(message.channel,'Tags {} added to {}!'.format((', '.join(tags)),girl.id))
+            
+        await client.delete_message(message)
+        await asyncio.sleep(30)
+        await client.delete_message(info)
+
     # This part is unbelievably bad, but I don't see an easy fix right now.
     # TODO: Rewrite all of this.
-    if message.content.startswith('>bestgirl'):
+    elif message.content.startswith('>bestgirl'):
         all_girls = session.query(QtAnimeGirl).order_by(QtAnimeGirl.elo).all()
         first = all_girls[len(all_girls)-1]
         best_girls = []
@@ -266,7 +285,7 @@ async def on_message(message):
 
     elif message.content.startswith('>updategirls') and message.author == owner_id:
         anime_girl = QtAnimeGirl()
-        new_girls = anime_girl.getNewGirls(image_directory)
+        new_girls = anime_girl.get_new_girls(image_directory)
         await client.send_message(message.channel, "{} new girls added!".format(new_girls))
 
     elif message.content.startswith('>addme'):
@@ -311,7 +330,7 @@ async def on_message(message):
             message.channel,
             open(os.path.join(image_directory, girl.image), 'rb'),
             filename=girl.image,
-            content='Random QT! {} [{}]'.format(girl, info))
+            content='Random QT! {} id{} [{}]'.format(girl.name, girl.id, info))
         await asyncio.sleep(60)
         await client.delete_message(message)
         await client.delete_message(qt)

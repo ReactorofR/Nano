@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer, String, Table,UniqueConstraint,create_engine,Column
+from sqlalchemy import ForeignKey, Integer, String, Table,UniqueConstraint,create_engine,Column,and_
 from sqlalchemy.orm import relationship,sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.sqltypes import NullType
@@ -21,7 +21,7 @@ class QtAnimeGirl(Base):
     __tablename__ = 'girldatabase_qtanimegirl'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(40), nullable= True)
+    name = Column(String(40), default= '')
     elo = Column(Integer, nullable=False, default= 1000)
     image = Column(String(100), nullable=False, unique= True)
 
@@ -42,7 +42,7 @@ class QtAnimeGirl(Base):
             Session.add(a)
         session.commit()
 
-    def get_new_girls(path='/images/'):
+    def get_new_girls(self,path='/images/'):
         new_girl_count = 0
         for image in os.listdir(path):
             try:
@@ -61,18 +61,17 @@ class QtAnimeGirl(Base):
         session.commit()
 
     def addTag(self,tag):
-        #check if tag exists
         try:
-            tag = session.query(Tag).filter(Tag.tag == tag).one()
+            tag = session.query(QtAnimeGirl).filter(and_ (QtAnimeGirl.tags.any(tag = tag),QtAnimeGirl.id == self.id)).one()
+            print (tag)
         except NoResultFound:
-            if tag not in self.tags:
-                try:
-                    new_tag = tag = session.query(Tag).filter(Tag.tag == tag).one()
-                except NoResultFound:
-                    new_tag = Tag(tag=tag)
-                    session.add(new_tag)
-                self.tags.append(new_tag)
-                session.commit()
+            try:
+                new_tag = session.query(Tag).filter(Tag.tag == tag).one()
+            except NoResultFound:
+                new_tag = Tag(tag=tag)
+                session.add(new_tag)
+            self.tags.append(new_tag)
+            session.commit()
 
 
 
