@@ -49,7 +49,7 @@ class qt_battle():
         # TODO: Comment this hideous regex.
         # Probably rewrite it too.
 
-        split_content = message.content.split(' ')
+        split_content = message.split(' ')
         tags = split_content[2].split(',')
 
         for tag in tags:
@@ -102,11 +102,12 @@ async def on_message(message):
 
         battle.caller = message.author
 
-        tags = message.content.split(' ')[1].split(',')
+
 
         if message.content == ('>qtb') or message.content == ('>qtbattle'):
             all_girls = session.query(QtAnimeGirl).all()
         else:
+            tags = message.content.split(' ')[1].split(',')
             for tag in tags:
                 try:
                     tag_object = session.query(Tag).filter(Tag.tag == tag).one()
@@ -346,7 +347,7 @@ async def on_message(message):
         except:
             pass
 
-    elif message.content.startswith('>setgame') and (message.author == owner_id)
+    elif message.content.startswith('>setgame') and (message.author == owner_id):
         game = discord.Game(name=message.content.split(' ')[1])
         await client.change_status(game)
 
