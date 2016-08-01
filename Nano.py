@@ -330,11 +330,6 @@ async def on_message(message):
         girl = random.choice(all_girls)
         #If girl found with provided tags list them
         if not info:
-            # FIXME: This will crash if the previous condition (not all_girls) does not evaluate to True
-            # In that case, girl will be an int, which has no attribute 'tags'
-            # I'm not sure if this can ever occur.
-            # This variable should probably be named differently regardless,
-            # as it's easy to mistake this for the int with the same name.
             tag_objects = girl.tags
             tags = []
             for x in tag_objects:
