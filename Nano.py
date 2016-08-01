@@ -305,12 +305,26 @@ async def on_message(message):
         else:
             tags = message.content.split(' ')[1].split(',')
             query = session.query(QtAnimeGirl)
+            #Establish a fallback query
+            working_query = session.query(QtAnimeGirl)
             for tag in tags:
                 query = query.filter(QtAnimeGirl.tags.any(tag = tag))
+                try:
+                    #Check if query is valid
+                    all_girls = query.all()
+                    #If it is (doesn't raise NoResultFound)
+                    #add the same query to the fallback query
+                    working_query = working_query.filter(QtAnimeGirl.tags.any(tag = tag))
+                except NoResultFound:
+                    #If it isn't revert
+                    query = working_query
             try:
-                all_girls = query.all()
+                 all_girls = query.all()
             except NoResultFound:
+                #This should never be raised
+                print ('This should never be raised \n Tags: {} \n Query: {}'.format(tags,query))
                 all_girls = session.query(QtAnimeGirl).all()
+            if query == session.query(QtAnimeGirl):
                 info = 'No girls found with provided tags'
 
         girl = random.choice(all_girls)
