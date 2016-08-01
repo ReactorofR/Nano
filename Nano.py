@@ -298,19 +298,20 @@ async def on_message(message):
     elif message.content.startswith('-randqt'):
         
         # FIXME: Redefinition from str to list.
-        tags = message.content.split(' ')[1].split(',')
         all_girls = []
         info = ''
         if message.content == ('-randqt'):
             all_girls = session.query(QtAnimeGirl).all()
         else:
+            tags = message.content.split(' ')[1].split(',')
             query = session.query(QtAnimeGirl)
             for tag in tags:
                 query = query.filter(QtAnimeGirl.tags.any(tag = tag))
             try:
                 all_girls = query.all()
             except NoResultFound:
-                pass
+                all_girls = session.query(QtAnimeGirl).all()
+                info = 'No girls found with provided tags'
 
         girl = random.choice(all_girls)
         #If girl found with provided tags list them
