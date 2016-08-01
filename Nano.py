@@ -319,7 +319,7 @@ async def on_message(message):
                     #If it isn't revert
                     query = working_query
             try:
-                 all_girls = query.all()
+                all_girls = query.all()
             except NoResultFound:
                 #This should never be raised
                 print ('This should never be raised \n Tags: {} \n Query: {}'.format(tags,query))
