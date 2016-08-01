@@ -94,6 +94,3 @@ t_sqlite_sequence = Table(
     Column('name', NullType),
     Column('seq', NullType)
 )
-
-elos = session.query(func.avg(QtAnimeGirl.elo)).all()
-print (int(elos[0][0]))

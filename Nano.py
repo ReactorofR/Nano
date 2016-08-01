@@ -308,22 +308,19 @@ async def on_message(message):
             working_query = session.query(QtAnimeGirl)
             for tag in tags:
                 query = query.filter(QtAnimeGirl.tags.any(tag = tag))
-                try:
-                    #Check if query is valid
-                    all_girls = query.all()
-                    #If it is (doesn't raise NoResultFound)
+                #Check if query is valid
+                all_girls = query.all()
+                if all_girls > []:
+                    #If it is
                     #add the same query to the fallback query
                     working_query = working_query.filter(QtAnimeGirl.tags.any(tag = tag))
-                except NoResultFound:
+                else:
                     #If it isn't revert
                     query = working_query
-            try:
-                all_girls = query.all()
-            except NoResultFound:
-                #This should never be raised
-                print ('This should never be raised \n Tags: {} \n Query: {}'.format(tags,query))
-                all_girls = session.query(QtAnimeGirl).all()
-            if query == session.query(QtAnimeGirl):
+
+            all_girls = query.all()
+            #This is a dirty fucking hack, but I'm not sure how else to do this
+            if query.all() == session.query(QtAnimeGirl).all():
                 info = 'No girls found with provided tags'
 
         girl = random.choice(all_girls)
