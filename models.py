@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer, String, Table,UniqueConstraint,create_engine,Column,and_
+from sqlalchemy import ForeignKey, Integer, String, Table,UniqueConstraint,create_engine,Column,and_,func
 from sqlalchemy.orm import relationship,sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.sqltypes import NullType
@@ -94,3 +94,6 @@ t_sqlite_sequence = Table(
     Column('name', NullType),
     Column('seq', NullType)
 )
+
+elos = session.query(func.avg(QtAnimeGirl.elo)).all()
+print (int(elos[0][0]))

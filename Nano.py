@@ -273,9 +273,8 @@ async def on_message(message):
                 content='{0} with a {1} ranking'.format(worstgirl[0], worstgirl[0].elo))
 
     elif (message.content.startswith('>averagegirl') or message.content.startswith('>avggirl')):
-        elo = QtAnimeGirl.objects.aggregate(Avg('elo'))
-        averagegirl = QtAnimeGirl.objects.filter(elo = elo['elo__avg'])
-        averagegirl = random.choice(averagegirl)
+        elo = session.query(func.avg(QtAnimeGirl.elo)).all()
+        averagegirl = random.choice(session.query(QtAnimeGirl).filter(QtAnimeGirl.elo == elo).all())
 
         await client.send_message(message.channel, "Most average girl!")
         await client.send_file(
