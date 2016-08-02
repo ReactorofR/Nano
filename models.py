@@ -4,7 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.ext.declarative import declarative_base
 
-import os,random
+import os
 
 engine = create_engine('sqlite:///db.sqlite3')
 Session = sessionmaker(bind=engine)
@@ -63,7 +63,6 @@ class QtAnimeGirl(Base):
     def addTag(self,tag):
         try:
             tag = session.query(QtAnimeGirl).filter(and_ (QtAnimeGirl.tags.any(tag = tag),QtAnimeGirl.id == self.id)).one()
-            print (tag)
         except NoResultFound:
             try:
                 new_tag = session.query(Tag).filter(Tag.tag == tag).one()

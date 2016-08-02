@@ -9,7 +9,7 @@ from models import *
 qtpath = r"E:\Projects\Discord bot\QTBOT\qtbot"
 sys.path.append(qtpath)
 
-image_directory = r"E:\Projects\Discord bot\QTBOT\qtbot\girldatabase\images"
+image_directory = 'images/'
 # Should probably be reading this from a file somewhere.
 # Maybe make a config file?
 owner_id = discord.User(id='191275079433322496')
@@ -164,7 +164,7 @@ async def on_message(message):
         if message.content.startswith('>name'):
 
             split_content = message.content.split(' ')
-            battle.name(split_content[1], split_content[2])
+            battle.name(int(split_content[1]), split_content[2])
             await client.send_message(message.channel,
                                       'Girl {0} now known as {1}!'.format(battle.girls[girl - 1].id,
                                                                           battle.girls[girl - 1]))
@@ -274,7 +274,7 @@ async def on_message(message):
 
     elif (message.content.startswith('>averagegirl') or message.content.startswith('>avggirl')):
         elo = session.query(func.avg(QtAnimeGirl.elo)).all()
-        averagegirl = random.choice(session.query(QtAnimeGirl).filter(QtAnimeGirl.elo == elo).all())
+        averagegirl = random.choice(session.query(QtAnimeGirl).filter(QtAnimeGirl.elo == int(elo[0][0])).all())
 
         await client.send_message(message.channel, "Most average girl!")
         await client.send_file(
