@@ -164,7 +164,8 @@ async def on_message(message):
         if message.content.startswith('>name'):
 
             split_content = message.content.split(' ')
-            battle.name(int(split_content[1]), split_content[2])
+            girl = int(split_content[1])
+            battle.name(girl, split_content[2])
             await client.send_message(message.channel,
                                       'Girl {0} now known as {1}!'.format(battle.girls[girl - 1].id,
                                                                           battle.girls[girl - 1]))
