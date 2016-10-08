@@ -16,6 +16,7 @@ owner_id = discord.User(id='191275079433322496')
 
 client = discord.Client()
 battles_ongoing = {}
+rand_user_cd_list = {}
 qtb_roles = {}
 
 class qt_battle():
@@ -308,7 +309,7 @@ async def on_message(message):
             #Establish a fallback query
             working_query = session.query(QtAnimeGirl)
             for tag in tags:
-                query = query.filter(QtAnimeGirl.tags.any(tag = tag))
+                query = query.filter(QtAnimeGirl.tags.any(tag = tag.strip()))
                 #Check if query is valid
                 all_girls = query.all()
                 if all_girls > []:
@@ -346,10 +347,16 @@ async def on_message(message):
     # This should probably not be in the qtbattle file :-).
     elif message.content.startswith('-rand'):
         try:
-            param = int(message.content.split(' ')[1])
-            mention = message.author.mention
-            await client.send_message(message.channel,
-                                      '{} rolled **{}**'.format(mention, random.randint(0, param)))
+            if (message.author in rand_user_cd_list and
+                (datetime.datetime.now() - rand_user_cd_list[message.author]).seconds > 10) or message.author not in rand_user_cd_list :
+                param = int(message.content.split(' ')[1])
+                mention = message.author.mention
+                await client.send_message(message.channel,
+                                          '{} rolled **{}**'.format(mention, random.randint(0, param)))
+                rand_user_cd_list[message.author]=datetime.datetime.now()
+            else:
+                await client.send_message(message.channel,'Rand is still on cooldown')
+                
         # FIXME: Bare except
         except:
             pass
