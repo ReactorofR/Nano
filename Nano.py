@@ -384,12 +384,5 @@ async def on_message(message):
         await client.delete_message(message)
         await client.send_message(message.channel, '(´・ω・`)')
 
-    if ':B1:' in message.content:
-        await client.send_file(message.channel, open(r'misc files\B1.png', 'rb'), filename=r'B1.png')
-    if ':B2:' in message.content:
-        await client.send_file(message.channel, open(r'misc files\B2.png', 'rb'), filename=r'B2.png')
-    if ':sectoid:' in message.content:
-        await client.send_file(message.channel, open(r'misc files\-sectoid-.png', 'rb'), filename=r'-sectoid-.png')
-
 if __name__ == "__main__":
     client.run('MjAwMjgzMTI0NjE2MTM0NjU3.CmAOIA.Eg7---YpjaI5Hto3tyH3UH2jjhI')
