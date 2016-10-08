@@ -305,7 +305,7 @@ async def on_message(message):
             all_girls = session.query(QtAnimeGirl).all()
         else:
             #remove whitespace and split into tags
-            tags = message.content.split(' ')[1].replace(' ','').split(',')
+            tags = message.content.replace('-randqt','').replace(' ','').split(',')
             query = session.query(QtAnimeGirl)
             #Establish a fallback query
             working_query = session.query(QtAnimeGirl)
