@@ -304,12 +304,13 @@ async def on_message(message):
         if message.content == ('-randqt'):
             all_girls = session.query(QtAnimeGirl).all()
         else:
-            tags = message.content.split(' ')[1].split(',')
+            #remove whitespace and split into tags
+            tags = message.content.split(' ')[1].replace(' ','').split(',')
             query = session.query(QtAnimeGirl)
             #Establish a fallback query
             working_query = session.query(QtAnimeGirl)
             for tag in tags:
-                query = query.filter(QtAnimeGirl.tags.any(tag = tag.strip()))
+                query = query.filter(QtAnimeGirl.tags.any(tag = tag))
                 #Check if query is valid
                 all_girls = query.all()
                 if all_girls > []:
@@ -348,14 +349,14 @@ async def on_message(message):
     elif message.content.startswith('-rand'):
         try:
             if (message.author in rand_user_cd_list and
-                (datetime.datetime.now() - rand_user_cd_list[message.author]).seconds > 10) or message.author not in rand_user_cd_list :
+                (datetime.datetime.now() - rand_user_cd_list[message.author]).seconds > 2) or message.author not in rand_user_cd_list :
                 param = int(message.content.split(' ')[1])
                 mention = message.author.mention
                 await client.send_message(message.channel,
                                           '{} rolled **{}**'.format(mention, random.randint(0, param)))
                 rand_user_cd_list[message.author]=datetime.datetime.now()
             else:
-                await client.send_message(message.channel,'Rand is still on cooldown')
+                await client.send_message(message.channel,'**Rand** is still on cooldown')
                 
         # FIXME: Bare except
         except:
