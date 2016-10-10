@@ -13,7 +13,7 @@ sys.path.append(qtpath)
 image_directory = 'images/'
 owner_id = discord.User(id='191275079433322496')
 rand_cd = 1
-daily_rand_allowence = 100
+daily_rand_allowance = 100
 
 client = discord.Client()
 battles_ongoing = {}
@@ -348,23 +348,25 @@ async def on_message(message):
 
     # This should probably not be in the qtbattle file :-).
     elif message.content.startswith('-rand'):
-        
+
         param = int(message.content.split(' ')[1])
         mention = message.author.mention
         
         try:
             #check if rand_allowence_left needs to  be reset
-            if message.author not in rand_user_cd_list[message.author] or rand_user_cd_list[message.author]['date'].date() < datetime.datetime.now().date():
+            print(message.author not in rand_user_cd_list)
+            if message.author not in rand_user_cd_list or rand_user_cd_list[message.author]['date'].date() < datetime.datetime.now().date():
+                rand_user_cd_list[message.author]={}
                 rand_user_cd_list[message.author]['rand_allowance_left'] = daily_rand_allowance
                 rand_user_cd_list[message.author]['date'] = datetime.datetime.now()
             
-            if (datetime.datetime.now() - rand_user_cd_list[message.author]['last_rand'].seconds > rand_cd)
-                and not rand_user_cd_list[message_author]['rand_allowance_left']:                
+            if (rand_user_cd_list[message.author]['rand_allowance_left'] == 0
+            and datetime.datetime.now() - rand_user_cd_list[message.author]['last_rand'].seconds > rand_cd):
                 await client.send_message(message.channel,
                                           '{} rolled **{}**'.format(mention, random.randint(0, param)))
                 rand_user_cd_list[message.author]['last_rand']=datetime.datetime.now()
                 
-            elif message.author in rand_user_cd_list and rand_user_cd_list[message.author]['rand_allowance_left']:
+            elif message.author in rand_user_cd_list and rand_user_cd_list[message.author]['rand_allowance_left'] > 0:
                 await client.send_message(message.channel,
                                           '{} rolled **{}**'.format(mention, random.randint(0, param)))
                 rand_user_cd_list[message.author]['last_rand']=datetime.datetime.now()
@@ -372,11 +374,10 @@ async def on_message(message):
                 
             else:
                 await client.send_message(message.channel,'**Rand** is still on cooldown')
-                
         # FIXME: Bare except
-        except:
+        except ValueError:
             pass
-
+        
     elif message.content.startswith('>setgame') and (message.author == owner_id):
         game = discord.Game(name=message.content.split(' ')[1])
         await client.change_status(game)
