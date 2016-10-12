@@ -356,7 +356,7 @@ async def on_message(message):
             if message.author not in rand_user_cd_list or rand_user_cd_list[message.author]['date'].date() < datetime.datetime.now().date():
                 rand_user_cd_list[message.author]={'rand_allowance_left' : daily_rand_allowance, 'date' : datetime.datetime.now(), 'last_rand' : datetime.datetime.now()}
                
-            if (rand_user_cd_list[message.author]['rand_allowance_left'] <= 0)
+            if (rand_user_cd_list[message.author]['rand_allowance_left'] <= 0
             and (datetime.datetime.now() - rand_user_cd_list[message.author]['last_rand']).seconds > rand_cd):
                 await client.send_message(message.channel,
                                           '{} rolled **{}**'.format(mention, random.randint(0, param)))
