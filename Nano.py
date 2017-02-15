@@ -404,5 +404,13 @@ async def on_message(message):
         await client.delete_message(message)
         await client.send_message(message.channel, '(´・ω・`)')
 
+    elif message.content == 'turtle':
+        await client.send_message(message.channel, '''```
+  _
+ (*\.-.
+  \/___\_
+   U   U
+        ```''')
+        
 if __name__ == "__main__":
     client.run(config['client_key'])
