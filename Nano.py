@@ -404,7 +404,7 @@ async def on_message(message):
         await client.delete_message(message)
         await client.send_message(message.channel, '(´・ω・`)')
 
-    elif message.content == 'turtle':
+    if 'turtle' in message.content or '🐢' in message.content:
         await client.send_message(message.channel, '''```
   _
  (*\.-.
