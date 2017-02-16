@@ -25,7 +25,7 @@ class qt_battle():
     def __init__(self):
         self.girls = [QtAnimeGirl(), QtAnimeGirl()]
         self.caller = discord.User()
-        self.vote = discord.Message()
+        self.vote = discord.Message(reactions=[])
         # TODO: These should REALLY be attributes of a QtAnimeGirl
         self.vote_A = 0
         self.vote_B = 0
