@@ -5,6 +5,8 @@ import random
 import os
 import sys
 import datetime
+import requests
+from bs4 import BeautifulSoup
 from models import *
 
 f = open('config','r')
@@ -85,6 +87,22 @@ class qt_battle():
                                                                      self.girls[0].elo - old_ELO_A,
                                                                      self.girls[1],
                                                                      self.girls[1].elo - old_ELO_B))
+
+def get_weather(location):
+
+    page = requests.get('http://wttr.in/'+location)
+    soup = BeautifulSoup(page.text,'html.parser')
+    text = soup.pre.get_text().split('\n')
+    #Put contents in code block
+    weather = '```'
+    #The first 8 lines (skipping one empty line) of the <pre> element wttr.in returns contain all we need
+    for n in range(1,8):
+        weather += text[n]+'\n'
+
+    #Finish code block
+    weather += '```'
+    return weather
+
 
 @client.event
 async def on_ready():
@@ -412,6 +430,10 @@ async def on_message(message):
     elif message.content.startswith('-denko'):
         await client.delete_message(message)
         await client.send_message(message.channel, '(´・ω・`)')
+
+    elif message.content.startswith('>weather'):
+        location = message.content.split(' ')[1]
+        await client.send_message(message.channel,get_weather(location))
 
     if 'turtle' in message.content or '🐢' in message.content:
         await client.send_message(message.channel, '''```
