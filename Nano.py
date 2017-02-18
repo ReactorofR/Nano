@@ -73,18 +73,18 @@ class qt_battle():
             oldELO = self.girls[winner - 1].elo
             self.girls[winner - 1].updateELO(self.girls[loser - 1].elo, 1)
             self.girls[loser - 1].updateELO(self.girls[winner - 1].elo, 0)
-            return '{0} Wins! Her rating is now {1}(+{2})'.format(self.girls[winner - 1],
+            return (True,'{0} Wins! Her rating is now {1}(+{2})'.format(self.girls[winner - 1],
                                                                   self.girls[winner - 1].elo,
-                                                                  self.girls[winner - 1].elo - oldELO)
+                                                                  self.girls[winner - 1].elo - oldELO))
         else:
             old_ELO_A = self.girls[0].elo
             old_ELO_B = self.girls[1].elo
             self.girls[0].updateELO(self.girls[1].elo, 0.5)
             self.girls[1].updateELO(self.girls[0].elo, 0.5)
-            return "It's a tie! QTR change: {} ({})  {} ({})".format(self.girls[0],
+            return (False,"It's a tie! QTR change: {} ({})  {} ({})".format(self.girls[0],
                                                                      self.girls[0].elo - old_ELO_A,
                                                                      self.girls[1],
-                                                                     self.girls[1].elo - old_ELO_B)
+                                                                     self.girls[1].elo - old_ELO_B))
 
 @client.event
 async def on_ready():
@@ -201,7 +201,16 @@ async def on_message(message):
         if timedelta.seconds > 180 or not battle.is_ongoing:
             del battles_ongoing[message.channel]
             end_message = battle.end()
-            await client.send_message(message.channel, end_message)
+            await client.send_message(message.channel, end_message[1])
+            if not end_message[0]:
+                chad =await client.send_file(
+                    message.channel,
+                    open('misc files/chadwarden.png','rb'),
+                    filename='chadwarden.png',
+                    content='Really?'
+                )
+                await asyncio.sleep(10)
+                await client.delete_message(chad)
 
     if message.content.startswith('>tagid'):
         split_content = message.content.split(' ')
