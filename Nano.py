@@ -90,7 +90,8 @@ class qt_battle():
 
 def get_weather(location):
 
-    page = requests.get('http://wttr.in/'+location)
+    headers = {'user-agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'}
+    page = requests.get('http://wttr.in/'+location,headers=headers)
     soup = BeautifulSoup(page.text,'html.parser')
     text = soup.pre.get_text().split('\n')
     #Put contents in code block
