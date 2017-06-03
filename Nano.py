@@ -436,6 +436,23 @@ async def on_message(message):
         location = message.content.split(' ')[1]
         await client.send_message(message.channel,get_weather(location))
 
+    elif message.content.startswith('>choose'):
+        options = message.content[7:].split(';')
+        await client.send_message(message.channel,"I chose `"+ random.choice(options) +"`")
+
+    elif message.content.startswith('e'):
+        arguments = message.content.split(' ')
+        if len(arguments) > 1 and random.random() > 0.1 :
+            reply = message.content[1:] + ' did it :unamused: :gun:'
+        elif len(arguments) > 1 :
+            reply = client.user.mention + ' did it :unamused: :gun:'
+        elif len(arguments) == 1 :
+            if random.random() > 0.3 :
+                reply = message.author.mention + ' did it :unamused: :gun:'
+            else:
+                reply = client.user.mention + ' did it :unamused: :gun:'
+        await client.send_message(message.channel,reply)
+
     if 'turtle' in message.content or '🐢' in message.content:
         await client.send_message(message.channel, '''```
   _
@@ -443,6 +460,6 @@ async def on_message(message):
   \/___\_
    U   U
         ```''')
-        
+ 
 if __name__ == "__main__":
     client.run(config['client_key'])
