@@ -94,7 +94,7 @@ def get_weather(location):
     page = requests.get('http://wttr.in/'+location,headers=headers)
     soup = BeautifulSoup(page.text,'html.parser')
     text = soup.pre.get_text().split('\n')
-    #Put contents in code block
+    #Put cwell he can roarontentsok  in code block
     weather = '```'
     #The first 8 lines (skipping one empty line) of the <pre> element wttr.in returns contain all we need
     for n in range(1,8):
@@ -440,7 +440,13 @@ async def on_message(message):
         options = message.content[7:].split(';')
         await client.send_message(message.channel,"I chose `"+ random.choice(options) +"`")
 
-    elif message.content.startswith('e'):
+    elif message.content.startswith('ayy ') or message.content == 'ayy':
+        if message.content[4:] :
+            await client.send_message(message.channel,'lmao '+ message.content[4:])
+        else :
+            await client.send_message(message.channel,'lmao')
+
+    elif (message.content.startswith('e ') or message.content == 'e')and message.author != client.user:
         arguments = message.content.split(' ')
         if len(arguments) > 1 and random.random() > 0.1 :
             reply = message.content[1:] + ' did it :unamused: :gun:'
