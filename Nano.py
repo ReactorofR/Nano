@@ -94,7 +94,7 @@ def get_weather(location):
     page = requests.get('http://wttr.in/'+location,headers=headers)
     soup = BeautifulSoup(page.text,'html.parser')
     text = soup.pre.get_text().split('\n')
-    #Put cwell he can roarontentsok  in code block
+    #Put cw-randqtell he can roarontentsok  in code block
     weather = '```'
     #The first 8 lines (skipping one empty line) of the <pre> element wttr.in returns contain all we need
     for n in range(1,8):
@@ -375,10 +375,25 @@ async def on_message(message):
         await client.delete_message(message)
         await client.delete_message(qt)
 
+    elif message.content.startswith('>summon'):
+        id = message.content.split(' ')[1]
+        girl = session.query(QtAnimeGirl).filter(QtAnimeGirl.id == id).one()
+        qt = await client.send_file(
+            message.channel,
+            open(os.path.join(image_directory, girl.image), 'rb'),
+            filename=girl.image,
+            content='You summoned: {} id{} '.format(girl.name, girl.id))
+        await asyncio.sleep(60)
+        await client.delete_message(message)
+        await client.delete_message(qt)
+
+
+
     elif message.content.startswith('-rand'):
 
         param = int(message.content.split(' ')[1])
         mention = message.author.mention
+        await client.send_typing(message.channel)
 
         try:
             #check if rand_allowence_left needs to  be reset
