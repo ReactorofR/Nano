@@ -6,6 +6,7 @@ import os
 import sys
 import datetime
 import requests
+import time
 from bs4 import BeautifulSoup
 from models import *
 
@@ -94,7 +95,7 @@ def get_weather(location):
     page = requests.get('http://wttr.in/'+location,headers=headers)
     soup = BeautifulSoup(page.text,'html.parser')
     text = soup.pre.get_text().split('\n')
-    #Put cw-randqtell he can roarontentsok  in code block
+    #Put in code block
     weather = '```'
     #The first 8 lines (skipping one empty line) of the <pre> element wttr.in returns contain all we need
     for n in range(1,8):
@@ -103,6 +104,21 @@ def get_weather(location):
     #Finish code block
     weather += '```'
     return weather
+
+def get_time_in_location(location):
+    google_api_key = config['google_api_key']
+    location_data = requests.get('https://maps.googleapis.com/maps/api/geocode/json',params={'address': location,'key': google_api_key})
+    location_coordinates = location_data.json()['results'][0]['geometry']['bounds']['northeast']
+    location_name = location_data.json()['results'][0]['formatted_address']
+    location_timezone = requests.get('https://maps.googleapis.com/maps/api/timezone/json',
+                                     params = {
+                                         'location': str(location_coordinates['lat'])+','+str(location_coordinates['lng']),
+                                         'timestamp': time.time(),
+                                         'key': google_api_key
+                                     }).json()
+    location_time = time.time() + location_timezone['dstOffset'] + location_timezone['rawOffset']
+    return 'The time in ' + location_name + ' is `' + time.strftime('%H:%M',time.gmtime(location_time)) + '`'
+
 
 
 @client.event
@@ -376,16 +392,17 @@ async def on_message(message):
         await client.delete_message(qt)
 
     elif message.content.startswith('>summon'):
-        id = message.content.split(' ')[1]
-        girl = session.query(QtAnimeGirl).filter(QtAnimeGirl.id == id).one()
-        qt = await client.send_file(
+        if message.author == owner_id:
+            id = message.content.split(' ')[1]
+            girl = session.query(QtAnimeGirl).filter(QtAnimeGirl.id == id).one()
+            qt = await client.send_file(
             message.channel,
             open(os.path.join(image_directory, girl.image), 'rb'),
             filename=girl.image,
             content='You summoned: {} id{} '.format(girl.name, girl.id))
-        await asyncio.sleep(60)
+            await asyncio.sleep(60)
+            await client.delete_message(qt)
         await client.delete_message(message)
-        await client.delete_message(qt)
 
 
 
@@ -450,6 +467,12 @@ async def on_message(message):
     elif message.content.startswith('>weather'):
         location = message.content.split(' ')[1]
         await client.send_message(message.channel,get_weather(location))
+
+    elif message.content.startswith('>time'):
+        location = message.content[5:]
+        await client.send_message(message.channel,get_time_in_location(location))
+
+
 
     elif message.content.startswith('>choose'):
         options = message.content[7:].split(';')
